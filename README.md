@@ -4,6 +4,7 @@
 ```
 mkdir build
 cd build
+mkdir data
 cmake ..
 make
 ./schedule_manager ......

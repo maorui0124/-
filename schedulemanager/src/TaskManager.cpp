@@ -55,7 +55,8 @@ void TaskManager::loadTasks() {
 void TaskManager::saveTasks() {
     std::ofstream file(filepath);
     for (const auto& task : tasks) {
-        file << task.toString() << std::endl;
+        file << task.id << " " << task.name << " " << timeToString(task.startTime) << " "
+             << task.priority << " " << task.category << " " << timeToString(task.remindTime) << std::endl;
     }
 }
 

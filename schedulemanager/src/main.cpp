@@ -1,5 +1,3 @@
-
-
 #include "AccountManager.h"
 #include "TaskManager.h"
 #include "Task.h"
@@ -10,6 +8,7 @@
 #include <sstream>
 #include <map>
 #include <iomanip>
+#include <limits>
 
 void displayHelp() {
     std::cout << "Usage: myschedule <command> [<args>]\n";
@@ -25,7 +24,19 @@ void displayHelp() {
     std::cout << "  helptask             Display help information.\n";
 }
 
-void runInteractiveMode(AccountManager& accountManager, TaskManager& taskManager) {
+void checkReminders(TaskManager& taskManager) {
+    while (true) {
+        auto now = std::time(nullptr);
+        for (const auto& task : taskManager.getAllTasks()) {
+            if (task.remindTime <= now && task.remindTime > now - 5) {
+                std::cout << "Reminder: " << task.name << " is scheduled to start soon!\n";
+            }
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+    }
+}
+
+void runInteractiveMode(AccountManager& accountManager) {
     std::string username, password;
     std::cout << "Enter username: ";
     std::cin >> username;
@@ -36,30 +47,46 @@ void runInteractiveMode(AccountManager& accountManager, TaskManager& taskManager
         return;
     }
 
+    TaskManager taskManager(accountManager.getUserTaskFilePath(username));
+    std::cout << "Debug: User " << username << " logged in." << std::endl;
     std::cout << "Welcome, " << username << "! Type 'helptask' for help.\n";
-    
+
+    // Start reminder checking thread
+    std::thread reminderThread(checkReminders, std::ref(taskManager));
+    reminderThread.detach(); // Detach the thread to run in the background
+
     while (true) {
         std::string command;
         std::cout << "myschedule> ";
         std::cin >> command;
         if (command == "exit") {
+            taskManager.saveTasks(); // Ensure tasks are saved before exiting
             break;
         } else if (command == "addtask") {
             std::string taskname, starttime, remindtime;
             int priority = MEDIUM, category = LIFE;
             std::cout << "Enter task name: ";
-            std::cin >> taskname;
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::getline(std::cin, taskname);
             std::cout << "Enter start time (YYYY-MM-DD HH:MM:SS): ";
-            std::cin >> starttime;
+            std::getline(std::cin, starttime);
             std::cout << "Enter priority (0: LOW, 1: MEDIUM, 2: HIGH): ";
             std::cin >> priority;
             std::cout << "Enter category (0: STUDY, 1: ENTERTAINMENT, 2: LIFE): ";
             std::cin >> category;
             std::cout << "Enter remind time (YYYY-MM-DD HH:MM:SS): ";
-            std::cin >> remindtime;
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::getline(std::cin, remindtime);
 
-            Task task(taskManager.generateTaskId(), taskname, stringToTime(starttime), 
-                      static_cast<Priority>(priority), static_cast<Category>(category), stringToTime(remindtime));
+            std::time_t startTimeParsed = stringToTime(starttime);
+            std::time_t remindTimeParsed = stringToTime(remindtime);
+            if (startTimeParsed == std::time_t(-1) || remindTimeParsed == std::time_t(-1)) {
+                std::cout << "Error: Invalid time format." << std::endl;
+                continue;
+            }
+
+            Task task(taskManager.generateTaskId(), taskname, startTimeParsed, 
+                      static_cast<Priority>(priority), static_cast<Category>(category), remindTimeParsed);
             if (taskManager.addTask(task)) {
                 std::cout << "Task added successfully.\n";
             } else {
@@ -98,18 +125,6 @@ void runInteractiveMode(AccountManager& accountManager, TaskManager& taskManager
     }
 }
 
-void checkReminders(TaskManager& taskManager) {
-    while (true) {
-        auto now = std::time(nullptr);
-        for (const auto& task : taskManager.getTasksByDate(*std::localtime(&now))) {
-            if (task.remindTime <= now && task.remindTime > now - 60) {
-                std::cout << "Reminder: " << task.name << " is scheduled to start soon!\n";
-            }
-        }
-        std::this_thread::sleep_for(std::chrono::seconds(60));
-    }
-}
-
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         displayHelp();
@@ -118,12 +133,9 @@ int main(int argc, char* argv[]) {
 
     std::string command = argv[1];
     AccountManager accountManager("data/accounts.txt");
-    TaskManager taskManager("data/tasks.txt");
 
     if (command == "run") {
-        std::thread reminderThread(checkReminders, std::ref(taskManager));
-        runInteractiveMode(accountManager, taskManager);
-        reminderThread.detach();
+        runInteractiveMode(accountManager);
     } else if (command == "register" && argc >= 4) {
         std::string username = argv[2];
         std::string password = argv[3];
@@ -139,14 +151,22 @@ int main(int argc, char* argv[]) {
             std::cout << "Login failed.\n";
             return 1;
         }
+        TaskManager taskManager(accountManager.getUserTaskFilePath(username));
         std::string taskname = argv[4];
         std::string starttime = argv[5];
         int priority = argc > 6 ? std::stoi(argv[6]) : MEDIUM;
         int category = argc > 7 ? std::stoi(argv[7]) : LIFE;
         std::string remindtime = argc > 8 ? argv[8] : starttime;
 
-        Task task(taskManager.generateTaskId(), taskname, stringToTime(starttime), 
-                  static_cast<Priority>(priority), static_cast<Category>(category), stringToTime(remindtime));
+        std::time_t startTimeParsed = stringToTime(starttime);
+        std::time_t remindTimeParsed = stringToTime(remindtime);
+        if (startTimeParsed == std::time_t(-1) || remindTimeParsed == std::time_t(-1)) {
+            std::cout << "Error: Invalid time format." << std::endl;
+            return 1;
+        }
+
+        Task task(taskManager.generateTaskId(), taskname, startTimeParsed, 
+                  static_cast<Priority>(priority), static_cast<Category>(category), remindTimeParsed);
         if (taskManager.addTask(task)) {
             std::cout << "Task added successfully.\n";
         } else {
@@ -159,6 +179,7 @@ int main(int argc, char* argv[]) {
             std::cout << "Login failed.\n";
             return 1;
         }
+        TaskManager taskManager(accountManager.getUserTaskFilePath(username));
         std::string dateStr = argv[4];
         std::tm date = {};
         std::istringstream ss(dateStr);
@@ -179,6 +200,7 @@ int main(int argc, char* argv[]) {
             std::cout << "Login failed.\n";
             return 1;
         }
+        TaskManager taskManager(accountManager.getUserTaskFilePath(username));
         int taskId = std::stoi(argv[4]);
         if (taskManager.deleteTask(taskId)) {
             std::cout << "Task deleted successfully.\n";

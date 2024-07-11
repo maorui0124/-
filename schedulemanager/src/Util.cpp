@@ -2,6 +2,8 @@
 #include <openssl/sha.h>
 #include <iomanip>
 #include <sstream>
+#include <ostream>
+#include <iostream>
 
 std::string hashString(const std::string& str) {
     unsigned char hash[SHA256_DIGEST_LENGTH];
@@ -22,8 +24,12 @@ std::string timeToString(const std::time_t& time) {
 
 std::time_t stringToTime(const std::string& str) {
     std::tm tm = {};
-    std::stringstream ss(str);
+    std::istringstream ss(str);
     ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
-    return mktime(&tm);
+    if (ss.fail()) {
+        std::cerr << "Error: Failed to parse date/time string: " << str << std::endl;
+        return std::time_t(-1); // return an invalid time_t value
+    }
+    return std::mktime(&tm);
 }
 

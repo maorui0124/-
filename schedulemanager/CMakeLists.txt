@@ -15,4 +15,7 @@ add_executable(schedule_manager
 )
 
 find_package(OpenSSL REQUIRED)
-target_link_libraries(schedule_manager OpenSSL::SSL OpenSSL::Crypto)
+target_link_libraries(schedule_manager PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+
+find_package(nlohmann_json 3.2.0 REQUIRED)
+target_link_libraries(schedule_manager PRIVATE nlohmann_json::nlohmann_json)

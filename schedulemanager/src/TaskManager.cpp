@@ -4,6 +4,10 @@
 #include <sstream>
 #include <algorithm>
 #include <iostream>
+#include <nlohmann/json.hpp>
+
+// 使用命名空间以便于操作
+using json = nlohmann::json;
 
 TaskManager::TaskManager(const std::string& filepath) : filepath(filepath) {
     loadTasks();
@@ -37,15 +41,36 @@ bool TaskManager::deleteTask(int taskId) {
 
 std::vector<Task> TaskManager::getTasksByDate(const std::tm& date) const {
     std::vector<Task> result;
-    for (const auto& task : tasks) {
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        std::cerr << "Error: Could not open task file for reading: " << filepath << std::endl;
+        return result;
+    }
+
+    json j;
+    file >> j;
+
+    for (const auto& item : j) {
+        Task task;
+        task.id = item["id"];
+        task.name = item["name"];
+        task.startTime = stringToTime(item["startTime"].get<std::string>());
+        task.priority = static_cast<Priority>(item["priority"].get<int>());
+        task.category = static_cast<Category>(item["category"].get<int>());
+        task.remindTime = stringToTime(item["remindTime"].get<std::string>());
+
         std::tm taskTime = *std::localtime(&task.startTime);
         if (taskTime.tm_year == date.tm_year && taskTime.tm_mon == date.tm_mon && taskTime.tm_mday == date.tm_mday) {
             result.push_back(task);
         }
     }
-    std::sort(result.begin(), result.end(), [](const Task& a, const Task& b) { return a.startTime < b.startTime; });
+
+    file.close();
     return result;
 }
+
+
+
 
 void TaskManager::loadTasks() {
     std::ifstream file(filepath);
@@ -55,12 +80,17 @@ void TaskManager::loadTasks() {
     }
 
     std::string line;
+    // std::cout << "Debug: Contents of " << filepath << std::endl;  // 打印文件路径
     while (std::getline(file, line)) {
+        //std::cout << line << std::endl;  // 打印文件的每一行内容
+
         std::istringstream iss(line);
         Task task;
         std::string startTimeStr, remindTimeStr;
         int priority, category;
-        if (!(iss >> task.id >> task.name >> startTimeStr >> priority >> category >> remindTimeStr)) { break; }
+        if (!(iss >> task.id >> task.name >> startTimeStr >> priority >> category >> remindTimeStr)) {
+            continue;  // 如果无法正确解析一行，则继续尝试下一行
+        }
         task.startTime = stringToTime(startTimeStr);
         task.remindTime = stringToTime(remindTimeStr);
         task.priority = static_cast<Priority>(priority);
@@ -70,6 +100,7 @@ void TaskManager::loadTasks() {
     file.close();
 }
 
+
 void TaskManager::saveTasks() {
     std::ofstream file(filepath);
     if (!file.is_open()) {
@@ -77,10 +108,19 @@ void TaskManager::saveTasks() {
         return;
     }
 
+    json j;
     for (const auto& task : tasks) {
-        file << task.id << " " << task.name << " " << timeToString(task.startTime) << " "
-             << task.priority << " " << task.category << " " << timeToString(task.remindTime) << std::endl;
+        j.push_back({
+            {"id", task.id},
+            {"name", task.name},
+            {"startTime", timeToString(task.startTime)},
+            {"priority", static_cast<int>(task.priority)},
+            {"category", static_cast<int>(task.category)},
+            {"remindTime", timeToString(task.remindTime)}
+        });
     }
+
+    file << j.dump(4); // 输出 JSON，缩进 4 个空格
     file.close();
 }
 

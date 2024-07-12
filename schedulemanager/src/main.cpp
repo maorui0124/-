@@ -60,7 +60,7 @@ void runInteractiveMode(AccountManager& accountManager) {
         std::cout << "myschedule> ";
         std::cin >> command;
         if (command == "exit") {
-            taskManager.saveTasks(); // Ensure tasks are saved before exiting
+            // taskManager.saveTasks(); // Ensure tasks are saved before exiting
             break;
         } else if (command == "addtask") {
             std::string taskname, starttime, remindtime;

@@ -102,23 +102,39 @@ void runInteractiveMode(AccountManager& accountManager) {
             } else {
                 std::cout << "Failed to add task. Task name and start time must be unique.\n";
             }
-        } else if (command == "showtask") {
+            } else if (command == "showtask") {
+            // std::cout << "Press ENTER to continue...";
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');  // 等待并忽略第一次回车
+
             std::string dateStr;
-            std::cout << "Enter date (YYYY-MM-DD): ";
-            std::cin >> dateStr;
+            std::cout << "Enter date (YYYY-MM-DD) or press ENTER to show all tasks: ";
+            std::getline(std::cin, dateStr); // 第二次回车用来接受日期或为空
+
             std::tm date = {};
-            std::istringstream ss(dateStr);
-            ss >> std::get_time(&date, "%Y-%m-%d");
-            if (ss.fail()) {
-                std::cout << "Failed to parse date.\n";
-                continue;
+            if (dateStr.empty()) {
+                // std::cout << "Default date set to 1900-01-01.\n";
+                date.tm_year = 0;  
+                date.tm_mon = 0;    
+                date.tm_mday = 0;  
+            } else {
+                std::istringstream ss(dateStr);
+                ss >> std::get_time(&date, "%Y-%m-%d");
+                if (ss.fail()) {
+                    std::cout << "Failed to parse date. Please enter a valid date in the format YYYY-MM-DD.\n";
+                    continue;
+                }
             }
 
             auto tasks = taskManager.getTasksByDate(date);
-            for (const auto& task : tasks) {
-                std::cout << task.toString() << std::endl;
+            if (tasks.empty()) {
+                std::cout << "No tasks found for this date.\n";
+            } else {
+                for (const auto& task : tasks) {
+                    std::cout << task.toString() << std::endl;
+                }
             }
-        } else if (command == "deltask") {
+        }
+        else if (command == "deltask") {
             int taskId;
             std::cout << "Enter task ID: ";
             std::cin >> taskId;

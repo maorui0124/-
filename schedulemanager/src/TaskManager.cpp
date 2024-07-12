@@ -14,19 +14,23 @@ TaskManager::TaskManager(const std::string& filepath) : filepath(filepath) {
 }
 
 bool TaskManager::addTask(const Task& task) {
+    // loadTasks();
     if (task.startTime == std::time_t(-1) || task.remindTime == std::time_t(-1)) {
         std::cerr << "Error: Invalid time value for task" << std::endl;
         return false;
     }
-    if (!isStartTimeUnique(task.startTime)) {
-        std::cerr << "Error: Task start time must be unique" << std::endl;
-        return false;
-    }
+    // if (!isStartTimeUnique(task.startTime)) {
+    //     std::cerr << "Error: Task start time must be unique" << std::endl;
+    //     return false;
+    // }
     if (!isUnique(task)) {
         std::cerr << "Error: Task name and start time combination must be unique" << std::endl;
         return false;
     }
     tasks.push_back(task);
+    for (const auto& task : tasks) {
+        std::cout<<task.name;
+    }
     saveTasks();
     return true;
 }
@@ -49,6 +53,9 @@ std::vector<Task> TaskManager::getTasksByDate(const std::tm& date) const {
 
     json j;
     file >> j;
+    // std::cout<<date.tm_year<<std::endl;
+    // std::cout<<date.tm_mon<<std::endl;
+    // std::cout<<date.tm_mday<<std::endl;
 
     for (const auto& item : j) {
         Task task;
@@ -60,7 +67,7 @@ std::vector<Task> TaskManager::getTasksByDate(const std::tm& date) const {
         task.remindTime = stringToTime(item["remindTime"].get<std::string>());
 
         std::tm taskTime = *std::localtime(&task.startTime);
-        if (taskTime.tm_year == date.tm_year && taskTime.tm_mon == date.tm_mon && taskTime.tm_mday == date.tm_mday) {
+        if((taskTime.tm_year == date.tm_year || date.tm_year == 0) && (taskTime.tm_mon == date.tm_mon || date.tm_mon == 0) && (taskTime.tm_mday == date.tm_mday || date.tm_mday == 0)) {
             result.push_back(task);
         }
     }
@@ -79,27 +86,31 @@ void TaskManager::loadTasks() {
         return;
     }
 
-    std::string line;
-    // std::cout << "Debug: Contents of " << filepath << std::endl;  // 打印文件路径
-    while (std::getline(file, line)) {
-        //std::cout << line << std::endl;  // 打印文件的每一行内容
+    nlohmann::json j;
+    try {
+        file >> j;  // 直接从文件流中读取 JSON 数据
+    } catch (nlohmann::json::parse_error& e) {
+        std::cerr << "JSON parsing error: " << e.what() << std::endl;
+        return;
+    }
 
-        std::istringstream iss(line);
+    for (const auto& item : j) {
         Task task;
-        std::string startTimeStr, remindTimeStr;
-        int priority, category;
-        if (!(iss >> task.id >> task.name >> startTimeStr >> priority >> category >> remindTimeStr)) {
-            continue;  // 如果无法正确解析一行，则继续尝试下一行
+        try {
+            task.id = item.at("id").get<int>();
+            task.name = item.at("name").get<std::string>();
+            task.startTime = stringToTime(item.at("startTime").get<std::string>());
+            task.remindTime = stringToTime(item.at("remindTime").get<std::string>());
+            task.priority = static_cast<Priority>(item.at("priority").get<int>());
+            task.category = static_cast<Category>(item.at("category").get<int>());
+        } catch (nlohmann::json::exception& e) {
+            std::cerr << "Error processing tasks: " << e.what() << std::endl;
+            continue;  // 跳过错误的数据项
         }
-        task.startTime = stringToTime(startTimeStr);
-        task.remindTime = stringToTime(remindTimeStr);
-        task.priority = static_cast<Priority>(priority);
-        task.category = static_cast<Category>(category);
         tasks.push_back(task);
     }
     file.close();
 }
-
 
 void TaskManager::saveTasks() {
     std::ofstream file(filepath);
@@ -107,9 +118,9 @@ void TaskManager::saveTasks() {
         std::cerr << "Error: Could not open task file for writing: " << filepath << std::endl;
         return;
     }
-
     json j;
     for (const auto& task : tasks) {
+        // std::cout<<task.name;
         j.push_back({
             {"id", task.id},
             {"name", task.name},

@@ -9,7 +9,7 @@ class TaskManager {
 public:
     TaskManager(const std::string& filepath);
     bool addTask(const Task& task);
-    bool deleteTask(int taskId);
+    bool deleteTask(const std::string& taskName);
     std::vector<Task> getTasksByDate(const std::tm& date) const;
     std::vector<Task> getAllTasks() const;
     void loadTasks();

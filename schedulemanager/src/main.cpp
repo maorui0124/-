@@ -11,17 +11,20 @@
 #include <limits>
 
 void displayHelp() {
-    std::cout << "Usage: myschedule <command> [<args>]\n";
+    std::cout << "Usage: myschedule <command> [<args>]\n\n";
     std::cout << "Commands:\n";
-    std::cout << "  run                  Run the schedule manager in interactive mode.\n";
-    std::cout << "  register <username> <password>  Register a new account.\n";
+    std::cout << "  run\n";
+    std::cout << "    Run the schedule manager in interactive mode.\n\n";
+    std::cout << "  register <username> <password>\n";
+    std::cout << "    Register a new account.\n\n";
     std::cout << "  addtask <username> <password> <taskname> <starttime> [<priority>] [<category>] [<remindtime>]\n";
-    std::cout << "                       Add a task to the schedule.\n";
+    std::cout << "    Add a task to the schedule. Optional fields: priority, category, remind time.\n\n";
     std::cout << "  showtask <username> <password> <date>\n";
-    std::cout << "                       Show tasks for a specific date.\n";
+    std::cout << "    Show tasks for a specific date.\n\n";
     std::cout << "  deltask <username> <password> <taskid>\n";
-    std::cout << "                       Delete a task by ID.\n";
-    std::cout << "  helptask             Display help information.\n";
+    std::cout << "    Delete a task by ID.\n\n";
+    std::cout << "  helptask\n";
+    std::cout << "    Display this help information.\n";
 }
 
 void checkReminders(TaskManager& taskManager) {
@@ -135,15 +138,16 @@ void runInteractiveMode(AccountManager& accountManager) {
             }
         }
         else if (command == "deltask") {
-            int taskId;
-            std::cout << "Enter task ID: ";
-            std::cin >> taskId;
-            if (taskManager.deleteTask(taskId)) {
-                std::cout << "Task deleted successfully.\n";
-            } else {
-                std::cout << "Failed to delete task. Task ID not found.\n";
-            }
-        } else if (command == "helptask") {
+    std::string taskName;
+    std::cout << "Enter task name: ";
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // 忽略之前的残留输入
+    std::getline(std::cin, taskName); // 使用 getline 读取包含空格的任务名称
+    if (taskManager.deleteTask(taskName)) {
+        std::cout << "Task '" << taskName << "' deleted successfully.\n";
+    } else {
+        std::cout << "Failed to delete task. Task name '" << taskName << "' not found.\n";
+    }
+} else if (command == "helptask") {
             displayHelp();
         } else {
             std::cout << "Unknown command. Type 'helptask' for help.\n";
@@ -219,21 +223,7 @@ int main(int argc, char* argv[]) {
         for (const auto& task : tasks) {
             std::cout << task.toString() << std::endl;
         }
-    } else if (command == "deltask" && argc >= 5) {
-        std::string username = argv[2];
-        std::string password = argv[3];
-        if (!accountManager.login(username, password)) {
-            std::cout << "Login failed.\n";
-            return 1;
-        }
-        TaskManager taskManager(accountManager.getUserTaskFilePath(username));
-        int taskId = std::stoi(argv[4]);
-        if (taskManager.deleteTask(taskId)) {
-            std::cout << "Task deleted successfully.\n";
-        } else {
-            std::cout << "Failed to delete task.\n";
-        }
-    } else {
+    }else {
         displayHelp();
     }
 

@@ -28,23 +28,19 @@ bool TaskManager::addTask(const Task& task) {
         return false;
     }
     tasks.push_back(task);
-    for (const auto& task : tasks) {
-        std::cout<<task.name;
-    }
+    // for (const auto& task : tasks) {
+    //     std::cout<<task.name;
+    // }
     saveTasks();
     return true;
 }
 
-bool TaskManager::deleteTask(const std::string& taskName) {
-    auto it = std::remove_if(tasks.begin(), tasks.end(), [&taskName](const Task& task) {
-        return task.name == taskName;
-    });
-    if (it == tasks.end()) {
-        return false; // 如果没有找到，返回 false
-    }
-    tasks.erase(it, tasks.end()); // 删除找到的任务
-    saveTasks(); // 保存修改后的任务列表
-    return true; // 成功删除任务
+bool TaskManager::deleteTask(int taskId) {
+    auto it = std::remove_if(tasks.begin(), tasks.end(), [taskId](const Task& task) { return task.id == taskId; });
+    if (it == tasks.end()) return false;
+    tasks.erase(it, tasks.end());
+    saveTasks();
+    return true;
 }
 
 

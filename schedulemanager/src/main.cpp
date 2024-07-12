@@ -138,16 +138,15 @@ void runInteractiveMode(AccountManager& accountManager) {
             }
         }
         else if (command == "deltask") {
-    std::string taskName;
-    std::cout << "Enter task name: ";
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // 忽略之前的残留输入
-    std::getline(std::cin, taskName); // 使用 getline 读取包含空格的任务名称
-    if (taskManager.deleteTask(taskName)) {
-        std::cout << "Task '" << taskName << "' deleted successfully.\n";
-    } else {
-        std::cout << "Failed to delete task. Task name '" << taskName << "' not found.\n";
-    }
-} else if (command == "helptask") {
+            int taskId;
+            std::cout << "Enter task ID: ";
+            std::cin >> taskId;
+            if (taskManager.deleteTask(taskId)) {
+                std::cout << "Task deleted successfully.\n";
+            } else {
+                std::cout << "Failed to delete task. Task ID not found.\n";
+            }
+        }else if (command == "helptask") {
             displayHelp();
         } else {
             std::cout << "Unknown command. Type 'helptask' for help.\n";

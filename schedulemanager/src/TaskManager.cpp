@@ -140,8 +140,13 @@ std::vector<Task> TaskManager::getAllTasks() const {
     return tasks;
 }
 int TaskManager::generateTaskId() {
-    static int idCounter = 0;
-    return ++idCounter;
+    int maxid = 0;
+    for (const auto& t : tasks) {
+        if (t.id>maxid) {
+            maxid = t.id;
+        }
+    }
+    return maxid + 1;
 }
 
 bool TaskManager::isUnique(const Task& task) const {

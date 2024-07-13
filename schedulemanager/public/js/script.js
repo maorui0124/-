@@ -1,4 +1,3 @@
-// script.js
 function showForm(formType) {
     const formContainer = document.getElementById('formContainer');
     switch (formType) {
@@ -22,7 +21,7 @@ function showForm(formType) {
             formContainer.innerHTML = `
                 <h2>Add Task</h2>
                 <input type="text" id="taskName" placeholder="Task Name">
-                <input type="text" id="startTime" placeholder="Start Time">
+                <input type="text" id="startTime" placeholder="Start Time (YYYY-MM-DD HH:MM:SS)">
                 <input type="text" id="priority" placeholder="Priority (0: LOW, 1: MEDIUM, 2: HIGH)">
                 <input type="text" id="category" placeholder="Category (0: STUDY, 1: ENTERTAINMENT, 2: LIFE)">
                 <input type="text" id="remindTime" placeholder="Remind Time (YYYY-MM-DD HH:MM:SS)">
@@ -54,6 +53,8 @@ function login() {
     const command = 'login';
     const args = [username, password];
 
+    console.log(`Executing command: ${command} with args: ${args}`);  // 打印日志
+
     executeCommand(command, args);
 }
 
@@ -63,38 +64,54 @@ function register() {
     const command = 'register';
     const args = [username, password];
 
+    console.log(`Executing command: ${command} with args: ${args}`);  // 打印日志
+
     executeCommand(command, args);
 }
 
 function addTask() {
+    const username = 'your-username'; // Replace with actual username
+    const password = 'your-password'; // Replace with actual password
     const taskName = document.getElementById('taskName').value;
     const startTime = document.getElementById('startTime').value;
     const priority = document.getElementById('priority').value || '1'; // 默认优先级为MEDIUM
     const category = document.getElementById('category').value || '2'; // 默认类别为LIFE
     const remindTime = document.getElementById('remindTime').value || startTime;
     const command = 'addtask';
-    const args = ['username', 'password', taskName, startTime, priority, category, remindTime];
+    const args = [username, password, taskName, startTime, priority, category, remindTime];
+
+    console.log(`Executing command: ${command} with args: ${args}`);  // 打印日志
 
     executeCommand(command, args);
 }
 
 function showTasks() {
+    const username = 'your-username'; // Replace with actual username
+    const password = 'your-password'; // Replace with actual password
     const date = document.getElementById('taskDate').value;
     const command = 'showtask';
-    const args = ['username', 'password', date];
+    const args = [username, password, date];
+
+    console.log(`Executing command: ${command} with args: ${args}`);  // 打印日志
 
     executeCommand(command, args);
 }
 
 function deleteTask() {
+    const username = 'your-username'; // Replace with actual username
+    const password = 'your-password'; // Replace with actual password
     const taskId = document.getElementById('taskId').value;
     const command = 'deltask';
-    const args = ['username', 'password', taskId];
+    const args = [username, password, taskId];
+
+    console.log(`Executing command: ${command} with args: ${args}`);  // 打印日志
 
     executeCommand(command, args);
 }
 
 function executeCommand(command, args) {
+    console.log(`Sending command: ${command} with args: ${args}`);  // 打印日志
+
     fetch('/executeCommand', {
         method: 'POST',
         headers: {
@@ -104,6 +121,7 @@ function executeCommand(command, args) {
     })
     .then(response => response.text())
     .then(data => {
+        console.log(`Response: ${data}`);  // 打印响应数据
         alert(data);
     })
     .catch(error => console.error('Error:', error));

@@ -53,6 +53,8 @@ void AccountManager::loadAccounts() {
 }
 
 void AccountManager::saveAccounts() {
+    std::cout<<"accountFilePath:"<<std::endl;
+    std::cout<<accountFilePath;
     std::ofstream file(accountFilePath);
     for (const auto& account : accounts) {
         file << account.first << " " << account.second << std::endl;
@@ -61,7 +63,11 @@ void AccountManager::saveAccounts() {
 }
 
 std::string AccountManager::getUserTaskFilePath(const std::string& username) const {
-    return "data/tasks_" + username + ".txt";
+    std::string currentPath = std::filesystem::current_path().string();
+    
+    if (currentPath.find("build") != std::string::npos) {
+        return "data/tasks_" + username + ".txt";
+    } else {
+        return "build/data/tasks_" + username + ".txt";
+    }
 }
-
-

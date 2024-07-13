@@ -9,6 +9,9 @@
 #include <map>
 #include <iomanip>
 #include <limits>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 void displayHelp() {
     std::cout << "Usage: myschedule <command> [<args>]\n\n";
@@ -54,7 +57,7 @@ void runInteractiveMode(AccountManager& accountManager) {
     std::cout << "Debug: User " << username << " logged in." << std::endl;
     std::cout << "Welcome, " << username << "! Type 'helptask' for help.\n";
 
-    // Start reminder checking thread
+    // Start reminder checking thrfead
     std::thread reminderThread(checkReminders, std::ref(taskManager));
     reminderThread.detach(); // Detach the thread to run in the background
 
@@ -161,7 +164,19 @@ int main(int argc, char* argv[]) {
     }
 
     std::string command = argv[1];
-    AccountManager accountManager("data/accounts.txt");
+
+    AccountManager accountManager("");
+
+    fs::path currentPath = fs::current_path();
+    std::string currentPathStr = currentPath.string();
+    // std::cout<<"currentPathStr:";
+    // std::cout<<currentPathStr;
+    if (currentPathStr.find("build") != std::string::npos) {
+        // std::cout<<"good!";
+        accountManager = AccountManager("data/accounts.txt");
+    } else {
+        accountManager = AccountManager("build/data/accounts.txt");
+    }
 
     if (command == "run") {
         runInteractiveMode(accountManager);

@@ -58,7 +58,7 @@ app.post('/executeCommand', (req, res) => {
         });
     } else if (command === 'addtask') {
         const [username, password, taskName, startTime, priority, category, remindTime] = args;
-        const execCommand = `addtask\n${username}\n${password}\n${taskName}\n${startTime}\n${priority}\n${category}\n${remindTime}\n`;
+        const execCommand = `addtask\n${taskName}\n${startTime}\n${priority}\n${category}\n${remindTime}\n`;
         console.log(`Executing addtask command: ${execCommand}`);  // 打印执行的命令
 
         scheduleManagerProcess.stdin.write(execCommand);
@@ -71,7 +71,7 @@ app.post('/executeCommand', (req, res) => {
         });
     } else if (command === 'showtask') {
         const [username, password, date] = args;
-        const execCommand = `showtask\n${username}\n${password}\n${date}\n`;
+        const execCommand = `showtask\n${date}\n`;
         console.log(`Executing showtask command: ${execCommand}`);  // 打印执行的命令
 
         scheduleManagerProcess.stdin.write(execCommand);
@@ -84,7 +84,7 @@ app.post('/executeCommand', (req, res) => {
         });
     } else if (command === 'deltask') {
         const [username, password, taskId] = args;
-        const execCommand = `deltask\n${username}\n${password}\n${taskId}\n`;
+        const execCommand = `deltask\n${taskId}\n`;
         console.log(`Executing deltask command: ${execCommand}`);  // 打印执行的命令
 
         scheduleManagerProcess.stdin.write(execCommand);

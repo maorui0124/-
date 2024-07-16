@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <iostream>
 #include <nlohmann/json.hpp>
-
+#include <mutex> 
 // 使用命名空间以便于操作
 using json = nlohmann::json;
 
@@ -15,6 +15,7 @@ TaskManager::TaskManager(const std::string& filepath) : filepath(filepath) {
 
 bool TaskManager::addTask(const Task& task) {
     // loadTasks();
+    std::lock_guard<std::mutex> lock(tasks_mutex); // 添加锁
     if (task.startTime == std::time_t(-1) || task.remindTime == std::time_t(-1)) {
         std::cerr << "Error: Invalid time value for task" << std::endl;
         return false;
@@ -36,6 +37,7 @@ bool TaskManager::addTask(const Task& task) {
 }
 
 bool TaskManager::deleteTask(int taskId) {
+    std::lock_guard<std::mutex> lock(tasks_mutex);
     auto it = std::remove_if(tasks.begin(), tasks.end(), [taskId](const Task& task) { return task.id == taskId; });
     if (it == tasks.end()) return false;
     tasks.erase(it, tasks.end());
@@ -45,6 +47,7 @@ bool TaskManager::deleteTask(int taskId) {
 
 
 std::vector<Task> TaskManager::getTasksByDate(const std::tm& date) const {
+    std::lock_guard<std::mutex> lock(tasks_mutex);
     std::vector<Task> result;
     std::ifstream file(filepath);
     if (!file.is_open()) {
@@ -81,6 +84,7 @@ std::vector<Task> TaskManager::getTasksByDate(const std::tm& date) const {
 
 
 void TaskManager::loadTasks() {
+    std::lock_guard<std::mutex> lock(tasks_mutex);
     std::ifstream file(filepath);
     if (!file.is_open()) {
         std::cerr << "Error: Could not open task file for reading: " << filepath << std::endl;
@@ -114,6 +118,7 @@ void TaskManager::loadTasks() {
 }
 
 void TaskManager::saveTasks() {
+    
     std::ofstream file(filepath);
     if (!file.is_open()) {
         std::cerr << "Error: Could not open task file for writing: " << filepath << std::endl;
@@ -137,6 +142,7 @@ void TaskManager::saveTasks() {
 }
 
 std::vector<Task> TaskManager::getAllTasks() const {
+    std::lock_guard<std::mutex> lock(tasks_mutex);
     return tasks;
 }
 int TaskManager::generateTaskId() {

@@ -49,12 +49,12 @@ void runInteractiveMode(AccountManager& accountManager) {
     std::cout << "Enter password: ";
     std::cin >> password;
     if (!accountManager.login(username, password)) {
-        std::cout << "Login failed.\n";
+        // std::cout << "Login failed.\n";
         return;
     }
 
     TaskManager taskManager(accountManager.getUserTaskFilePath(username));
-    std::cout << "Debug: User " << username << " logged in." << std::endl;
+    std::cout << "User " << username << " logged in." << std::endl;
     std::cout << "Welcome, " << username << "! Type 'helptask' for help.\n";
 
     // Start reminder checking thread

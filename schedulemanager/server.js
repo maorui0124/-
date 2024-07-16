@@ -45,43 +45,62 @@ app.post('/executeCommand', (req, res) => {
         startScheduleManager(() => {
             // 确保 scheduleManagerProcess 已经启动，然后执行 login 命令
             const loginCommand = `${args[0]}\n${args[1]}\n`;
-            console.log(`Executing login command: ${loginCommand}`);  // 打印执行的命令
+            console.log(`Executing login command: ${loginCommand}`);  
 
             scheduleManagerProcess.stdin.write(loginCommand);
 
             let output = '';
-            scheduleManagerProcess.stdout.once('data', (data) => {
-                output += data.toString();
-                console.log(`Login response: ${output}`);  // 打印响应
-                res.send(output);
-            });
         });
+        const onData = (data) => {
+            const output = data.toString();
+            console.log(`AddTask response: ${output}`);
+            
+            if(output.includes('Login successful') ||
+               output.includes('Login fail')) {
+                res.send(output);
+            scheduleManagerProcess.stdout.removeListener('data', onData);
+            }
+
+        };
+        scheduleManagerProcess.stdout.on('data', onData);
     } else if (command === 'addtask') {
         const [username, password, taskName, startTime, priority, category, remindTime] = args;
         const execCommand = `addtask\n${taskName}\n${startTime}\n${priority}\n${category}\n${remindTime}\n`;
-        console.log(`Executing addtask command: ${execCommand}`);  // 打印执行的命令
-
+        console.log(`Executing addtask command: ${execCommand}`);
         scheduleManagerProcess.stdin.write(execCommand);
 
         let output = '';
-        scheduleManagerProcess.stdout.once('data', (data) => {
-            output += data.toString();
-            console.log(`AddTask response: ${output}`);  // 打印响应
-            res.send(output);
-        });
+        const onData = (data) => {
+            const output = data.toString();
+            console.log(`AddTask response: ${output}`);
+            
+            if(output.includes('Invalid time format. Failed to add task.') ||
+               output.includes('Failed to add task. Task name and start time must be unique.')||
+                output.includes('Task added successfully.')) {
+                res.send(output);
+            scheduleManagerProcess.stdout.removeListener('data', onData);
+            }
+            
+        };
+        scheduleManagerProcess.stdout.on('data', onData);
     } else if (command === 'showtask') {
         const [username, password, date] = args;
         const execCommand = `showtask\n${date}\n`;
-        console.log(`Executing showtask command: ${execCommand}`);  // 打印执行的命令
-
+        console.log(`Executing showtask command: ${execCommand}`);
         scheduleManagerProcess.stdin.write(execCommand);
-
-        let output = '';
-        scheduleManagerProcess.stdout.once('data', (data) => {
-            output += data.toString();
-            console.log(`ShowTask response: ${output}`);  // 打印响应
-            res.send(output);
-        });
+    
+        const onData = (data) => {
+            const output = data.toString();
+            console.log(`AddTask response: ${output}`);
+            
+            if(output.includes('Failed to parse date. Please enter a valid date in the format YYYY-MM-DD.') ||
+               output.includes('00:00:00') ||
+               output.includes('No tasks found for this date.')) {
+                res.send(output);
+                scheduleManagerProcess.stdout.removeListener('data', onData);
+            }
+        };
+        scheduleManagerProcess.stdout.on('data', onData);
     } else if (command === 'deltask') {
         const [username, password, taskId] = args;
         const execCommand = `deltask\n${taskId}\n`;
@@ -90,11 +109,17 @@ app.post('/executeCommand', (req, res) => {
         scheduleManagerProcess.stdin.write(execCommand);
 
         let output = '';
-        scheduleManagerProcess.stdout.once('data', (data) => {
-            output += data.toString();
-            console.log(`DelTask response: ${output}`);  // 打印响应
-            res.send(output);
-        });
+        const onData = (data) => {
+            const output = data.toString();
+            console.log(`AddTask response: ${output}`);
+            
+            if(output.includes('Failed to delete task. Task ID not found.') ||
+               output.includes('Task deleted successfully.')) {
+                res.send(output);
+            scheduleManagerProcess.stdout.removeListener('data', onData);
+            }
+        };
+        scheduleManagerProcess.stdout.on('data', onData);
     } else if (command === 'register') {
         const [username, password] = args;
         const execCommand = `./build/schedule_manager register ${username} ${password}`;

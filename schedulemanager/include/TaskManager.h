@@ -4,7 +4,7 @@
 #include "Task.h"
 #include <vector>
 #include <string>
-
+#include <mutex>
 class TaskManager {
 public:
     TaskManager(const std::string& filepath);
@@ -20,6 +20,7 @@ private:
     std::vector<Task> tasks;
     bool isUnique(const Task& task) const;
     bool isStartTimeUnique(const std::time_t& startTime) const;
+    mutable std::mutex tasks_mutex; 
 };
 
 #endif // TASK_MANAGER_H

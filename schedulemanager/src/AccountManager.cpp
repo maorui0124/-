@@ -53,8 +53,8 @@ void AccountManager::loadAccounts() {
 }
 
 void AccountManager::saveAccounts() {
-    std::cout<<"accountFilePath:"<<std::endl;
-    std::cout<<accountFilePath;
+    // std::cout<<"accountFilePath:"<<std::endl;
+    // std::cout<<accountFilePath;
     std::ofstream file(accountFilePath);
     for (const auto& account : accounts) {
         file << account.first << " " << account.second << std::endl;

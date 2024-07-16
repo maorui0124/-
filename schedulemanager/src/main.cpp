@@ -22,6 +22,7 @@ void displayHelp() {
     std::cout << "添加任务：addtask\n";
     std::cout << "展示任务：showtask\n";
     std::cout << "删除任务：deltask\n";
+    std::cout << "退出：exit\n";
     std::cout << "若选择不登陆，可通过以下命令进行操作：\n";
     std::cout << "./schedule_manager addtask <username> <password> <taskname> <starttime> [<priority>] [<category>] [<remindtime>]（其中<starttime>和<remindtime>的格式为”YYYY-MM-DD HH:MM:SS”）\n";
     std::cout << "./schedule_manager showtask <username> <password> <date>\n";

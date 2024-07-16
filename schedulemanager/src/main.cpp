@@ -10,24 +10,22 @@
 #include <iomanip>
 #include <limits>
 #include <filesystem>
-
+#include <cstdlib>
 namespace fs = std::filesystem;
 
 void displayHelp() {
-    std::cout << "Usage: myschedule <command> [<args>]\n\n";
-    std::cout << "Commands:\n";
-    std::cout << "  run\n";
-    std::cout << "    Run the schedule manager in interactive mode.\n\n";
-    std::cout << "  register <username> <password>\n";
-    std::cout << "    Register a new account.\n\n";
-    std::cout << "  addtask <username> <password> <taskname> <starttime> [<priority>] [<category>] [<remindtime>]\n";
-    std::cout << "    Add a task to the schedule. Optional fields: priority, category, remind time.\n\n";
-    std::cout << "  showtask <username> <password> <date>\n";
-    std::cout << "    Show tasks for a specific date.\n\n";
-    std::cout << "  deltask <username> <password> <taskid>\n";
-    std::cout << "    Delete a task by ID.\n\n";
-    std::cout << "  helptask\n";
-    std::cout << "    Display this help information.\n";
+    std::cout << "账户注册：./schedule_manager register <username> <password>\n";
+    std::cout << "注册后可选择直接登录或不直接登陆进行操作：\n";
+    std::cout << "若选择登录：\n";
+    std::cout << "./schedule_manager run\n";
+    std::cout << "随后输入账号密码，并根据提示和需要逐行输入\n";
+    std::cout << "添加任务：addtask\n";
+    std::cout << "展示任务：showtask\n";
+    std::cout << "删除任务：deltask\n";
+    std::cout << "若选择不登陆，可通过以下命令进行操作：\n";
+    std::cout << "./schedule_manager addtask <username> <password> <taskname> <starttime> [<priority>] [<category>] [<remindtime>]（其中<starttime>和<remindtime>的格式为”YYYY-MM-DD HH:MM:SS”）\n";
+    std::cout << "./schedule_manager showtask <username> <password> <date>\n";
+    std::cout << "./schedule_manager deltask <username> <password> <taskid>\n";
 }
 
 void checkReminders(TaskManager& taskManager) {
@@ -36,11 +34,13 @@ void checkReminders(TaskManager& taskManager) {
         for (const auto& task : taskManager.getAllTasks()) {
             if (task.remindTime <= now && task.remindTime > now - 5) {
                 std::cout << "Reminder: " << task.name << " is scheduled to start soon!\n";
+                std::system("paplay /usr/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga"); // 播放系统提示音
             }
         }
         std::this_thread::sleep_for(std::chrono::seconds(5));
     }
 }
+
 
 void runInteractiveMode(AccountManager& accountManager) {
     std::string username, password;
@@ -57,7 +57,7 @@ void runInteractiveMode(AccountManager& accountManager) {
     std::cout << "Debug: User " << username << " logged in." << std::endl;
     std::cout << "Welcome, " << username << "! Type 'helptask' for help.\n";
 
-    // Start reminder checking thrfead
+    // Start reminder checking thread
     std::thread reminderThread(checkReminders, std::ref(taskManager));
     reminderThread.detach(); // Detach the thread to run in the background
 
@@ -108,7 +108,7 @@ void runInteractiveMode(AccountManager& accountManager) {
             } else {
                 std::cout << "Failed to add task. Task name and start time must be unique.\n";
             }
-            } else if (command == "showtask") {
+        } else if (command == "showtask") {
             // std::cout << "Press ENTER to continue...";
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');  // 等待并忽略第一次回车
 
@@ -139,8 +139,7 @@ void runInteractiveMode(AccountManager& accountManager) {
                     std::cout << task.toString() << std::endl;
                 }
             }
-        }
-        else if (command == "deltask") {
+        } else if (command == "deltask") {
             int taskId;
             std::cout << "Enter task ID: ";
             std::cin >> taskId;
@@ -149,7 +148,7 @@ void runInteractiveMode(AccountManager& accountManager) {
             } else {
                 std::cout << "Failed to delete task. Task ID not found.\n";
             }
-        }else if (command == "helptask") {
+        } else if (command == "helptask") {
             displayHelp();
         } else {
             std::cout << "Unknown command. Type 'helptask' for help.\n";
@@ -237,16 +236,23 @@ int main(int argc, char* argv[]) {
         for (const auto& task : tasks) {
             std::cout << task.toString() << std::endl;
         }
-    }else {
+    } else if (command == "deltask" && argc >= 5) {
+        std::string username = argv[2];
+        std::string password = argv[3];
+        int taskId = std::stoi(argv[4]);
+        if (!accountManager.login(username, password)) {
+            std::cout << "Login failed.\n";
+            return 1;
+        }
+        TaskManager taskManager(accountManager.getUserTaskFilePath(username));
+        if (taskManager.deleteTask(taskId)) {
+            std::cout << "Task deleted successfully.\n";
+        } else {
+            std::cout << "Failed to delete task. Task ID not found.\n";
+        }
+    } else {
         displayHelp();
     }
 
     return 0;
 }
-
-
-
-
-
-
-
